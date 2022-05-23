@@ -34,11 +34,85 @@ class RustIterator<Item> {
     return false;
   }
 
+  chain(other: RustIterator<Item>): RustIterator<Item> {
+    const self = this;
+    function* process() {
+      yield* self;
+      yield* other;
+    }
+    return new RustIterator(process());
+  }
+
+  collect(): Item[] {
+    return Array.from(this);
+  }
+
+  count(): number {
+    let count = 0;
+    for (const _ of this) {
+      count++;
+    }
+    return count;
+  }
+
+  cycle(): RustIterator<Item> {
+    const self = this;
+    function* process() {
+      let index = 0;
+      let length = 0;
+      const results = [];
+      while (true) {
+        const next = self.next();
+        if (!next.done) {
+          length++;
+          index = (index + 1) % length;
+          results[index] = next.value;
+        } else {
+          if (length === 0) {
+            return;
+          }
+          index = (index + 1) % length;
+        }
+        yield results[index];
+      }
+    }
+    return new RustIterator(process());
+  }
+
+  enumerate(): RustIterator<[number, Item]> {
+    const self = this;
+    function* process() {
+      let index = 0;
+      for (const value of self) {
+        yield [index++, value] as [number, Item];
+      }
+    }
+    return new RustIterator(process());
+  }
+
+  fold<Result>(
+    init: Result,
+    predicate: (accumulator: Result, item: Item) => Result
+  ): Result {
+    let accumulator = init;
+    for (const value of this) {
+      accumulator = predicate(accumulator, value);
+    }
+    return accumulator;
+  }
+
+  reduce(predicate: (accumulator: Item, item: Item) => Item): Item | null {
+    const init = this.next();
+    if (init.done) {
+      return null;
+    }
+    return this.fold(init.value, predicate);
+  }
+
   filter<SubItem extends Item>(predicate: (item: Item) => boolean) {
     const self = this;
     function* process() {
       for (const value of self) {
-        console.log("filter predicate", value);
         if (predicate(value)) {
           yield value as SubItem;
         }
@@ -51,7 +125,6 @@ class RustIterator<Item> {
     const self = this;
     function* process() {
       for (const value of self) {
-        console.log("map predicate", value);
         yield predicate(value);
       }
     }
@@ -64,12 +137,50 @@ class RustIterator<Item> {
 
   find(predicate: (item: Item) => boolean) {
     for (const value of this) {
-      console.log("find predicate", value);
       if (predicate(value)) {
         return value;
       }
     }
     return null;
+  }
+
+  sum(): number {
+    const init = this.next().value;
+    if (init.done) {
+      return 0;
+    }
+    if (typeof init.value === "number") {
+      return this.fold(init.value, (acc, value) => acc + value);
+    }
+    throw new TypeError("Cannot sum iterator of non-numeric values");
+  }
+  product(): number {
+    const init = this.next().value;
+    if (init.done) {
+      return 0;
+    }
+    if (typeof init.value === "number") {
+      return this.fold(
+        init.value,
+        (acc, value) => acc * (value as unknown as number)
+      );
+    }
+    throw new TypeError("Cannot multiply iterator of non-numeric values");
+  }
+
+  scan<State, Mapped>(
+    init: State,
+    predicate: (state: { current: State }, item: Item) => Mapped
+  ): RustIterator<Mapped> {
+    const self = this;
+    const state = { current: init };
+    function* process() {
+      for (const value of self) {
+        const mapped = predicate(state, value);
+        yield mapped;
+      }
+    }
+    return new RustIterator(process());
   }
 
   flatten(): RustIterator<FlatRustIterator<Item, 0>> {
@@ -92,15 +203,3 @@ export function iter<IterableItem>(
 ): RustIterator<IterableItem> {
   return new RustIterator(iterable[Symbol.iterator]());
 }
-
-const nested = iter([1, 2, iter([3, 4, 5, iter([6, 7])]), 8]);
-console.log(Array.from(nested.flatten()));
-
-const i = iter(new Array(1_000_000).fill(null).map((_, i) => i + 1))
-  // .map((x) => x * 2)
-  // .filter((x) => x > 2);
-  .filterMap((x) => {
-    const m = x * 2;
-    return m > 4 ? m : null;
-  });
-console.log(i.find((x) => x > 6));
