@@ -133,7 +133,6 @@ describe("Iterator", () => {
       });
     });
   });
-
   describe(".fold()", () => {
     it("should fold iterator into one value", () => {
       // arrange
@@ -144,7 +143,6 @@ describe("Iterator", () => {
       expect(result).toBe(6);
     });
   });
-
   describe(".scan()", () => {
     it("should work", () => {
       // arrange
@@ -170,6 +168,91 @@ describe("Iterator", () => {
       expect(result.next()).toStrictEqual({
         done: true,
         value: undefined,
+      });
+    });
+  });
+  describe(".eq()", () => {
+    describe("empty iterators", () => {
+      it("should return true", () => {
+        // arrange
+        const a1 = iter([]);
+        const a2 = iter([]);
+        // act
+        const result = a1.eq(a2);
+        // assert
+        expect(result).toBe(true);
+      });
+    });
+    describe("iterator 1 is empty", () => {
+      describe("iterator 2 is not empty", () => {
+        it("should return false", () => {
+          // arrange
+          const a1 = iter<number>([]);
+          const a2 = iter([1, 2, 3]);
+          // act
+          const result = a1.eq(a2);
+          // assert
+          expect(result).toBe(false);
+        });
+      });
+    });
+    describe("iterator 2 is empty", () => {
+      describe("iterator 1 is not empty", () => {
+        it("should return false", () => {
+          // arrange
+          const a1 = iter([1, 2, 3]);
+          const a2 = iter<number>([]);
+          // act
+          const result = a1.eq(a2);
+          // assert
+          expect(result).toBe(false);
+        });
+      });
+    });
+    describe("iterators are not empty", () => {
+      describe("iterators are equal", () => {
+        it("should return true", () => {
+          // arrange
+          const a1 = iter([1, 2, 3]);
+          const a2 = iter([1, 2, 3]);
+          // act
+          const result = a1.eq(a2);
+          // assert
+          expect(result).toBe(true);
+        });
+      });
+      describe("iterator 2 is bigger than 1", () => {
+        it("should return false", () => {
+          // arrange
+          const a1 = iter([1, 2, 3]);
+          const a2 = iter([1, 2, 3, 4]);
+          // act
+          const result = a1.eq(a2);
+          // assert
+          expect(result).toBe(false);
+        });
+      });
+      describe("iterator 2 is smaller than 1", () => {
+        it("should return false", () => {
+          // arrange
+          const a1 = iter([1, 2, 3]);
+          const a2 = iter([1, 2]);
+          // act
+          const result = a1.eq(a2);
+          // assert
+          expect(result).toBe(false);
+        });
+      });
+      describe("iterator 2 is different than 1", () => {
+        it("should return false", () => {
+          // arrange
+          const a1 = iter([1, 2, 3]);
+          const a2 = iter([1, 2, 5]);
+          // act
+          const result = a1.eq(a2);
+          // assert
+          expect(result).toBe(false);
+        });
       });
     });
   });

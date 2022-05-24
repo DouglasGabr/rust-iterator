@@ -90,6 +90,20 @@ class RustIterator<Item> {
     return new RustIterator(process());
   }
 
+  eq(other: RustIterator<Item>): boolean {
+    for (const value of this) {
+      const otherNext = other.next();
+      if (otherNext.done) {
+        return false;
+      }
+      if (value !== otherNext.value) {
+        return false;
+      }
+    }
+    const otherDone = other.next();
+    return !!otherDone.done;
+  }
+
   fold<Result>(
     init: Result,
     predicate: (accumulator: Result, item: Item) => Result
