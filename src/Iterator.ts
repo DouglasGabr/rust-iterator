@@ -5,6 +5,13 @@ type FlatRustIterator<Iter, Depth extends number> = {
     : Iter;
 }[Depth extends -1 ? "done" : "recur"];
 
+export type Ordering = -1 | 0 | 1;
+function cmp<T>(a: T, b: T): Ordering {
+  if (a === b) return 0;
+  if (a < b) return -1;
+  return 1;
+}
+
 class RustIterator<Item> {
   constructor(private iterable: Iterator<Item>) {}
 
@@ -158,6 +165,154 @@ class RustIterator<Item> {
     return null;
   }
 
+  findMap<OutputItem>(predicate: (item: Item) => OutputItem | null) {
+    for (const value of this) {
+      const mapped = predicate(value);
+      if (mapped !== null) {
+        return mapped;
+      }
+    }
+    return null;
+  }
+
+  flatMap<OutputItem>(predicate: (item: Item) => RustIterator<OutputItem>) {
+    return this.map(predicate).flatten();
+  }
+
+  forEach(predicate: (item: Item) => unknown) {
+    for (const value of this) {
+      predicate(value);
+    }
+  }
+
+  inspect(predicate: (item: Item) => unknown) {
+    const self = this;
+    function* process() {
+      for (const value of self) {
+        predicate(value);
+        yield value;
+      }
+    }
+    return new RustIterator(process());
+  }
+
+  last(): Item | null {
+    let last: Item | null = null;
+    for (const value of this) {
+      last = value;
+    }
+    return last;
+  }
+
+  mapWhile<OutputItem>(predicate: (item: Item) => OutputItem | null) {
+    return this.map(predicate).takeWhile((x) => x !== null);
+  }
+
+  max(): Item | null {
+    return this.maxBy(cmp);
+  }
+
+  maxBy(predicate: (a: Item, b: Item) => Ordering): Item | null {
+    return this.reduce((a, b) => {
+      const res = predicate(a, b);
+      return res > 0 ? a : b;
+    });
+  }
+
+  maxByKey(predicate: (a: Item) => number): Item | null {
+    return (
+      this.map((x) => [x, predicate(x)] as [Item, number]).maxBy((a, b) =>
+        cmp(a[1], b[1])
+      )?.[0] ?? null
+    );
+  }
+
+  min(): Item | null {
+    return this.minBy(cmp);
+  }
+
+  minBy(predicate: (a: Item, b: Item) => Ordering): Item | null {
+    return this.reduce((a, b) => {
+      const res = predicate(a, b);
+      return res <= 0 ? a : b;
+    });
+  }
+
+  minByKey(predicate: (a: Item) => number): Item | null {
+    return (
+      this.map((x) => [x, predicate(x)] as [Item, number]).minBy((a, b) =>
+        cmp(a[1], b[1])
+      )?.[0] ?? null
+    );
+  }
+
+  ne(other: RustIterator<Item>): boolean {
+    return !this.eq(other);
+  }
+
+  nth(index: number): Item | null {
+    let i = 0;
+    for (const value of this) {
+      if (i === index) {
+        return value;
+      }
+      i++;
+    }
+    return null;
+  }
+
+  partition(predicate: (item: Item) => boolean): [Item[], Item[]] {
+    const a = [];
+    const b = [];
+    for (const value of this) {
+      if (predicate(value)) {
+        a.push(value);
+      } else {
+        b.push(value);
+      }
+    }
+    return [a, b];
+  }
+
+  position(predicate: (item: Item) => boolean) {
+    let i = 0;
+    for (const value of this) {
+      if (predicate(value)) {
+        return i;
+      }
+      i++;
+    }
+    return null;
+  }
+
+  skip(n: number) {
+    const self = this;
+    function* process() {
+      for (let i = 0; i < n; i++) {
+        const next = self.next();
+        if (next.done) {
+          return;
+        }
+      }
+      yield* self;
+    }
+    return new RustIterator(process());
+  }
+
+  take(n: number) {
+    const self = this;
+    function* process() {
+      for (let i = 0; i < n; i++) {
+        const next = self.next();
+        if (next.done) {
+          return;
+        }
+        yield next.value;
+      }
+    }
+    return new RustIterator(process());
+  }
+
   sum(): number {
     const init = this.next().value;
     if (init.done) {
@@ -206,6 +361,19 @@ class RustIterator<Item> {
         } else {
           yield value as FlatRustIterator<Item, 0>;
         }
+      }
+    }
+    return new RustIterator(process());
+  }
+
+  takeWhile(predicate: (item: Item) => boolean): RustIterator<Item> {
+    const self = this;
+    function* process() {
+      for (const value of self) {
+        if (!predicate(value)) {
+          return;
+        }
+        yield value;
       }
     }
     return new RustIterator(process());

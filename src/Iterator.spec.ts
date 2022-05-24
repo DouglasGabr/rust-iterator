@@ -256,4 +256,24 @@ describe("Iterator", () => {
       });
     });
   });
+  describe(".inspect()", () => {
+    it("should inspect", () => {
+      // arrange
+      const a = iter([1, 4, 2, 3]);
+      const log = jest.fn();
+      // act
+      const sum = a
+        .inspect((x) => log(`about to filter: ${x}`))
+        .filter((x) => x % 2 === 0)
+        .inspect((x) => log(`made it through filter: ${x}`))
+        .fold(0, (sum, i) => sum + i);
+      // assert
+      expect(log).toHaveBeenNthCalledWith(1, "about to filter: 1");
+      expect(log).toHaveBeenNthCalledWith(2, "about to filter: 4");
+      expect(log).toHaveBeenNthCalledWith(3, "made it through filter: 4");
+      expect(log).toHaveBeenNthCalledWith(4, "about to filter: 2");
+      expect(log).toHaveBeenNthCalledWith(5, "made it through filter: 2");
+      expect(log).toHaveBeenNthCalledWith(6, "about to filter: 3");
+    });
+  });
 });
