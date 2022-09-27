@@ -378,6 +378,34 @@ class RustIterator<Item> {
     }
     return new RustIterator(process());
   }
+
+  zip<OtherItem>(
+    other: RustIterator<OtherItem>
+  ): RustIterator<[Item, OtherItem]> {
+    const self = this;
+    function* process() {
+      for (const value of self) {
+        const otherValue = other.next();
+        if (otherValue.done) {
+          return;
+        }
+        yield [value, otherValue.value] as [Item, OtherItem];
+      }
+    }
+    return new RustIterator(process());
+  }
+
+  unzip<First, Second>(
+    this: RustIterator<[First, Second]>
+  ): [First[], Second[]] {
+    const a = [];
+    const b = [];
+    for (const [first, second] of this) {
+      a.push(first);
+      b.push(second);
+    }
+    return [a, b];
+  }
 }
 
 export function iter<IterableItem>(
