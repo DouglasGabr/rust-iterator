@@ -3,7 +3,7 @@ type FlatRustIterator<Iter, Depth extends number> = {
   recur: Iter extends RustIterator<infer InnerIter>
     ? FlatRustIterator<InnerIter, [-1, 0][Depth]>
     : Iter;
-}[Depth extends -1 ? "done" : "recur"];
+}[Depth extends -1 ? 'done' : 'recur'];
 
 export type Ordering = -1 | 0 | 1;
 function cmp<T>(a: T, b: T): Ordering {
@@ -113,7 +113,7 @@ class RustIterator<Item> {
 
   fold<Result>(
     init: Result,
-    predicate: (accumulator: Result, item: Item) => Result
+    predicate: (accumulator: Result, item: Item) => Result,
   ): Result {
     let accumulator = init;
     for (const value of this) {
@@ -166,13 +166,7 @@ class RustIterator<Item> {
   }
 
   findMap<OutputItem>(predicate: (item: Item) => OutputItem | null) {
-    for (const value of this) {
-      const mapped = predicate(value);
-      if (mapped !== null) {
-        return mapped;
-      }
-    }
-    return null;
+    return this.map(predicate).find((x) => x !== null);
   }
 
   flatMap<OutputItem>(predicate: (item: Item) => RustIterator<OutputItem>) {
@@ -222,7 +216,7 @@ class RustIterator<Item> {
   maxByKey(predicate: (a: Item) => number): Item | null {
     return (
       this.map((x) => [x, predicate(x)] as [Item, number]).maxBy((a, b) =>
-        cmp(a[1], b[1])
+        cmp(a[1], b[1]),
       )?.[0] ?? null
     );
   }
@@ -241,7 +235,7 @@ class RustIterator<Item> {
   minByKey(predicate: (a: Item) => number): Item | null {
     return (
       this.map((x) => [x, predicate(x)] as [Item, number]).minBy((a, b) =>
-        cmp(a[1], b[1])
+        cmp(a[1], b[1]),
       )?.[0] ?? null
     );
   }
@@ -313,33 +307,24 @@ class RustIterator<Item> {
     return new RustIterator(process());
   }
 
-  sum(): number {
-    const init = this.next().value;
+  sum(this: RustIterator<number>): number {
+    const init = this.next();
     if (init.done) {
       return 0;
     }
-    if (typeof init.value === "number") {
-      return this.fold(init.value, (acc, value) => acc + value);
-    }
-    throw new TypeError("Cannot sum iterator of non-numeric values");
+    return this.fold(init.value, (acc, value) => acc + value);
   }
-  product(): number {
-    const init = this.next().value;
+  product(this: RustIterator<number>): number {
+    const init = this.next();
     if (init.done) {
       return 0;
     }
-    if (typeof init.value === "number") {
-      return this.fold(
-        init.value,
-        (acc, value) => acc * (value as unknown as number)
-      );
-    }
-    throw new TypeError("Cannot multiply iterator of non-numeric values");
+    return this.fold(init.value, (acc, value) => acc * value);
   }
 
   scan<State, Mapped>(
     init: State,
-    predicate: (state: { current: State }, item: Item) => Mapped
+    predicate: (state: { current: State }, item: Item) => Mapped,
   ): RustIterator<Mapped> {
     const self = this;
     const state = { current: init };
@@ -354,7 +339,7 @@ class RustIterator<Item> {
 
   flatten(): RustIterator<FlatRustIterator<Item, 0>> {
     const self = this;
-    function* process(): Generator<FlatRustIterator<Item, 0>, any, undefined> {
+    function* process() {
       for (const value of self) {
         if (value instanceof RustIterator) {
           yield* value;
@@ -380,7 +365,7 @@ class RustIterator<Item> {
   }
 
   zip<OtherItem>(
-    other: RustIterator<OtherItem>
+    other: RustIterator<OtherItem>,
   ): RustIterator<[Item, OtherItem]> {
     const self = this;
     function* process() {
@@ -396,7 +381,7 @@ class RustIterator<Item> {
   }
 
   unzip<First, Second>(
-    this: RustIterator<[First, Second]>
+    this: RustIterator<[First, Second]>,
   ): [First[], Second[]] {
     const a = [];
     const b = [];
@@ -409,7 +394,7 @@ class RustIterator<Item> {
 }
 
 export function iter<IterableItem>(
-  iterable: Iterable<IterableItem>
+  iterable: Iterable<IterableItem>,
 ): RustIterator<IterableItem> {
   return new RustIterator(iterable[Symbol.iterator]());
 }
