@@ -1,4 +1,5 @@
 import { iter } from './Iterator';
+import { None, Some } from './Option';
 
 describe('Iterator', () => {
   describe('.all()', () => {
@@ -169,15 +170,15 @@ describe('Iterator', () => {
       // act
       const result = a.reduce((acc, x) => acc + x);
       // assert
-      expect(result).toBe(6);
+      expect(result).toStrictEqual(Some(6));
     });
-    it('should return null if iterator is empty', () => {
+    it('should return None if iterator is empty', () => {
       // arrange
       const a = iter<number>([]);
       // act
       const result = a.reduce((acc, x) => acc + x);
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.scan()', () => {
@@ -331,7 +332,7 @@ describe('Iterator', () => {
       // arrange
       const a = iter([1, 2, 3, 4]);
       // act
-      const result = a.filterMap((x) => (x % 2 === 0 ? x * 2 : null));
+      const result = a.filterMap((x) => (x % 2 === 0 ? Some(x * 2) : None));
       // assert
       expect(result.next()).toStrictEqual({ done: false, value: 4 });
       expect(result.next()).toStrictEqual({ done: false, value: 8 });
@@ -345,15 +346,15 @@ describe('Iterator', () => {
       // act
       const result = a.find((x) => x % 2 === 0);
       // assert
-      expect(result).toStrictEqual(2);
+      expect(result).toStrictEqual(Some(2));
     });
-    it('should return null if not found', () => {
+    it('should return None if not found', () => {
       // arrange
       const a = iter([1, 2, 3, 4]);
       // act
       const result = a.find((x) => x % 5 === 0);
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.findMap()', () => {
@@ -361,31 +362,32 @@ describe('Iterator', () => {
       // arrange
       const a = iter([1, 2, 3, 4]);
       // act
-      const result = a.findMap((x) => (x % 2 === 0 ? x * 2 : null));
+      const result = a.findMap((x) => (x % 2 === 0 ? Some(x * 2) : None));
       // assert
-      expect(result).toStrictEqual(4);
+      expect(result).toStrictEqual(Some(4));
     });
-    it('should return null if not found', () => {
+    it('should return None if not found', () => {
       // arrange
       const a = iter([1, 2, 3, 4]);
       // act
-      const result = a.findMap((x) => (x % 5 === 0 ? x * 2 : null));
+      const result = a.findMap((x) => (x % 5 === 0 ? Some(x * 2) : None));
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.flatten()', () => {
     it('should flatten', () => {
       // arrange
-      const a = iter([iter([1, 2]), iter([3, 4]), 5]);
+      const a = iter('abc\n123'.split('\n')).map((i) => iter(i.split('')));
       // act
       const result = a.flatten();
       // assert
-      expect(result.next()).toStrictEqual({ done: false, value: 1 });
-      expect(result.next()).toStrictEqual({ done: false, value: 2 });
-      expect(result.next()).toStrictEqual({ done: false, value: 3 });
-      expect(result.next()).toStrictEqual({ done: false, value: 4 });
-      expect(result.next()).toStrictEqual({ done: false, value: 5 });
+      expect(result.next()).toStrictEqual({ done: false, value: 'a' });
+      expect(result.next()).toStrictEqual({ done: false, value: 'b' });
+      expect(result.next()).toStrictEqual({ done: false, value: 'c' });
+      expect(result.next()).toStrictEqual({ done: false, value: '1' });
+      expect(result.next()).toStrictEqual({ done: false, value: '2' });
+      expect(result.next()).toStrictEqual({ done: false, value: '3' });
       expect(result.next()).toStrictEqual({ done: true, value: undefined });
     });
   });
@@ -428,15 +430,15 @@ describe('Iterator', () => {
       // act
       const result = a.last();
       // assert
-      expect(result).toStrictEqual(3);
+      expect(result).toStrictEqual(Some(3));
     });
-    it('should return null if empty', () => {
+    it('should return None if empty', () => {
       // arrange
       const a = iter([]);
       // act
       const result = a.last();
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.takeWhile()', () => {
@@ -456,7 +458,7 @@ describe('Iterator', () => {
       // arrange
       const a = iter([1, 2, 3, 4]);
       // act
-      const result = a.mapWhile((x) => (x < 3 ? x * 2 : null));
+      const result = a.mapWhile((x) => (x < 3 ? Some(x * 2) : None));
       // assert
       expect(result.next()).toStrictEqual({ done: false, value: 2 });
       expect(result.next()).toStrictEqual({ done: false, value: 4 });
@@ -470,15 +472,15 @@ describe('Iterator', () => {
       // act
       const result = a.maxBy((a, b) => (a === b ? 0 : a > b ? 1 : -1));
       // assert
-      expect(result).toStrictEqual(4);
+      expect(result).toStrictEqual(Some(4));
     });
-    it('should return null if empty', () => {
+    it('should return None if empty', () => {
       // arrange
       const a = iter<number>([]);
       // act
       const result = a.maxBy((a, b) => (a === b ? 0 : a > b ? 1 : -1));
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.max()', () => {
@@ -488,15 +490,15 @@ describe('Iterator', () => {
       // act
       const result = a.max();
       // assert
-      expect(result).toStrictEqual(4);
+      expect(result).toStrictEqual(Some(4));
     });
-    it('should return null if empty', () => {
+    it('should return None if empty', () => {
       // arrange
       const a = iter<number>([]);
       // act
       const result = a.max();
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.maxByKey()', () => {
@@ -506,15 +508,15 @@ describe('Iterator', () => {
       // act
       const result = a.maxByKey((x) => x.a);
       // assert
-      expect(result).toStrictEqual({ a: 4 });
+      expect(result).toStrictEqual(Some({ a: 4 }));
     });
-    it('should return null if empty', () => {
+    it('should return None if empty', () => {
       // arrange
       const a = iter<{ a: number }>([]);
       // act
       const result = a.maxByKey((x) => x.a);
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.minBy()', () => {
@@ -524,15 +526,15 @@ describe('Iterator', () => {
       // act
       const result = a.minBy((a, b) => (a === b ? 0 : a > b ? 1 : -1));
       // assert
-      expect(result).toStrictEqual(1);
+      expect(result).toStrictEqual(Some(1));
     });
-    it('should return null if empty', () => {
+    it('should return None if empty', () => {
       // arrange
       const a = iter<number>([]);
       // act
       const result = a.minBy((a, b) => (a === b ? 0 : a > b ? 1 : -1));
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.min()', () => {
@@ -542,15 +544,15 @@ describe('Iterator', () => {
       // act
       const result = a.min();
       // assert
-      expect(result).toStrictEqual(1);
+      expect(result).toStrictEqual(Some(1));
     });
-    it('should return null if empty', () => {
+    it('should return None if empty', () => {
       // arrange
       const a = iter<number>([]);
       // act
       const result = a.min();
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.minByKey()', () => {
@@ -560,15 +562,15 @@ describe('Iterator', () => {
       // act
       const result = a.minByKey((x) => x.a);
       // assert
-      expect(result).toStrictEqual({ a: 1 });
+      expect(result).toStrictEqual(Some({ a: 1 }));
     });
-    it('should return null if empty', () => {
+    it('should return None if empty', () => {
       // arrange
       const a = iter<{ a: number }>([]);
       // act
       const result = a.minByKey((x) => x.a);
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.ne()', () => {
@@ -596,15 +598,15 @@ describe('Iterator', () => {
       // act
       const result = a.nth(2);
       // assert
-      expect(result).toStrictEqual(3);
+      expect(result).toStrictEqual(Some(3));
     });
-    it('should return null if empty', () => {
+    it('should return None if empty', () => {
       // arrange
       const a = iter<number>([]);
       // act
       const result = a.nth(2);
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.partition()', () => {
@@ -627,15 +629,15 @@ describe('Iterator', () => {
       // act
       const result = a.position((x) => x === 3);
       // assert
-      expect(result).toStrictEqual(2);
+      expect(result).toStrictEqual(Some(2));
     });
-    it('should return null if not found', () => {
+    it('should return None if not found', () => {
       // arrange
       const a = iter([1, 2, 3, 4]);
       // act
       const result = a.position((x) => x === 5);
       // assert
-      expect(result).toBeNull();
+      expect(result).toStrictEqual(None);
     });
   });
   describe('.skip()', () => {

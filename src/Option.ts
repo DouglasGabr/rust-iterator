@@ -2,8 +2,32 @@ import { iter } from './Iterator';
 
 type FlatOption<T> = T extends Option<unknown> ? T : Option<T>;
 
-export abstract class Option<T> {
-  abstract match<A, B>(ifSome: (value: T) => A, ifNone: () => B): A | B;
+enum OptionType {
+  Some = 'Some',
+  None = 'None',
+}
+
+export class Option<T> {
+  private __type: OptionType;
+  private __value: T | undefined;
+
+  private constructor(type: OptionType, value: T | undefined) {
+    this.__type = type;
+    this.__value = value;
+  }
+
+  static Some<T>(this: void, value: T): Option<T> {
+    return new Option(OptionType.Some, value);
+  }
+
+  static None<T>(this: void): Option<T> {
+    return new Option(OptionType.None, undefined) as Option<T>;
+  }
+
+  match<A, B>(ifSome: (value: T) => A, ifNone: () => B): A | B {
+    return this.isSome() ? ifSome(this.__value as T) : ifNone();
+  }
+
   unwrap(): T {
     return this.expect('called Option.unwrap() on a None value');
   }
@@ -17,20 +41,20 @@ export abstract class Option<T> {
   }
   filter(predicate: (value: T) => boolean): Option<T> {
     return this.match(
-      (value) => (predicate(value) ? this : new None<T>()),
-      () => new None<T>(),
+      (value) => (predicate(value) ? this : Option.None<T>()),
+      () => Option.None<T>(),
     );
   }
   flatten(this: Option<Option<unknown>>): FlatOption<T> {
     return this.match(
       (value) => value as FlatOption<T>,
-      () => new None<T>() as FlatOption<T>,
+      () => Option.None<T>() as FlatOption<T>,
     );
   }
   map<U>(fn: (value: T) => U): Option<U> {
     return this.match(
-      (value) => new Some(fn(value)),
-      () => new None<U>(),
+      (value) => Option.Some(fn(value)),
+      () => Option.None<U>(),
     );
   }
 
@@ -41,11 +65,11 @@ export abstract class Option<T> {
   and<U>(other: Option<U>): Option<U> {
     return this.match(
       () => other,
-      () => new None<U>(),
+      () => Option.None<U>(),
     );
   }
   andThen<U>(fn: (value: T) => Option<U>): Option<U> {
-    return this.match(fn, () => new None<U>());
+    return this.match(fn, () => Option.None<U>());
   }
   or(other: Option<T>): Option<T> {
     return this.match(
@@ -56,54 +80,39 @@ export abstract class Option<T> {
   orElse(fn: () => Option<T>): Option<T> {
     return this.match(() => this, fn);
   }
-  isNone(): this is None<T> {
-    return this instanceof None;
+  isNone() {
+    return this.__type === OptionType.None;
   }
-  isSome(): this is Some<T> {
-    return this instanceof Some;
+  isSome() {
+    return this.__type === OptionType.Some;
   }
   zip<U>(other: Option<U>): Option<[T, U]> {
     return this.match(
       (value) => other.map((otherValue) => [value, otherValue]),
-      () => new None<[T, U]>(),
+      () => Option.None<[T, U]>(),
     );
   }
   unzip<U, V>(this: Option<[U, V]>): [Option<U>, Option<V>] {
     return this.match(
-      ([u, v]) => [new Some(u), new Some(v)],
-      () => [new None<U>(), new None<V>()],
+      ([u, v]) => [Option.Some(u), Option.Some(v)],
+      () => [Option.None<U>(), Option.None<V>()],
     );
   }
   xor(other: Option<T>): Option<T> {
     return this.match(
       () =>
         other.match(
-          () => new None<T>(),
+          () => Option.None<T>(),
           () => this,
         ),
       () =>
         other.match(
           () => other,
-          () => new None<T>(),
+          () => Option.None<T>(),
         ),
     );
   }
 }
 
-export class Some<T> extends Option<T> {
-  match<A, B>(ifSome: (value: T) => A, _ifNone: () => B): A {
-    return ifSome(this.value);
-  }
-  constructor(private value: T) {
-    super();
-  }
-}
-
-export class None<T = unknown> extends Option<T> {
-  match<A, B>(_ifSome: (value: T) => A, ifNone: () => B): B {
-    return ifNone();
-  }
-  constructor() {
-    super();
-  }
-}
+export const Some = Option.Some;
+export const None = Option.None<never>();

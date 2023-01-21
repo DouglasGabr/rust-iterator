@@ -1,9 +1,6 @@
-type FlatRustIterator<Iter, Depth extends number> = {
-  done: Iter;
-  recur: Iter extends RustIterator<infer InnerIter>
-    ? FlatRustIterator<InnerIter, [-1, 0][Depth]>
-    : Iter;
-}[Depth extends -1 ? 'done' : 'recur'];
+import { None, Option, Some } from './Option';
+
+type FlatIterator<T> = T extends RustIterator<unknown> ? T : RustIterator<T>;
 
 export type Ordering = -1 | 0 | 1;
 function cmp<T>(a: T, b: T): Ordering {
@@ -122,12 +119,12 @@ class RustIterator<Item> {
     return accumulator;
   }
 
-  reduce(predicate: (accumulator: Item, item: Item) => Item): Item | null {
+  reduce(predicate: (accumulator: Item, item: Item) => Item): Option<Item> {
     const init = this.next();
     if (init.done) {
-      return null;
+      return None;
     }
-    return this.fold(init.value, predicate);
+    return Some(this.fold(init.value, predicate));
   }
 
   filter<SubItem extends Item>(predicate: (item: Item) => boolean) {
@@ -152,21 +149,27 @@ class RustIterator<Item> {
     return new RustIterator(process());
   }
 
-  filterMap<OutputItem>(predicate: (item: Item) => OutputItem | null) {
-    return this.map(predicate).filter<OutputItem>((x) => x !== null);
+  filterMap<OutputItem>(
+    predicate: (item: Item) => Option<OutputItem>,
+  ): RustIterator<OutputItem> {
+    return this.map(predicate)
+      .filter((x) => x.isSome())
+      .map((x) => x.unwrap());
   }
 
-  find(predicate: (item: Item) => boolean) {
+  find(predicate: (item: Item) => boolean): Option<Item> {
     for (const value of this) {
       if (predicate(value)) {
-        return value;
+        return Some(value);
       }
     }
-    return null;
+    return None;
   }
 
-  findMap<OutputItem>(predicate: (item: Item) => OutputItem | null) {
-    return this.map(predicate).find((x) => x !== null);
+  findMap<OutputItem>(predicate: (item: Item) => Option<OutputItem>) {
+    return this.map(predicate)
+      .find((x) => x.isSome())
+      .flatten();
   }
 
   flatMap<OutputItem>(predicate: (item: Item) => RustIterator<OutputItem>) {
@@ -190,69 +193,67 @@ class RustIterator<Item> {
     return new RustIterator(process());
   }
 
-  last(): Item | null {
-    let last: Item | null = null;
+  last(): Option<Item> {
+    let last: Option<Item> = None;
     for (const value of this) {
-      last = value;
+      last = Some(value);
     }
     return last;
   }
 
-  mapWhile<OutputItem>(predicate: (item: Item) => OutputItem | null) {
-    return this.map(predicate).takeWhile((x) => x !== null);
+  mapWhile<OutputItem>(predicate: (item: Item) => Option<OutputItem>) {
+    return this.map(predicate)
+      .takeWhile((x) => x.isSome())
+      .map((x) => x.unwrap());
   }
 
-  max(): Item | null {
+  max(): Option<Item> {
     return this.maxBy(cmp);
   }
 
-  maxBy(predicate: (a: Item, b: Item) => Ordering): Item | null {
+  maxBy(predicate: (a: Item, b: Item) => Ordering): Option<Item> {
     return this.reduce((a, b) => {
       const res = predicate(a, b);
       return res > 0 ? a : b;
     });
   }
 
-  maxByKey(predicate: (a: Item) => number): Item | null {
-    return (
-      this.map((x) => [x, predicate(x)] as [Item, number]).maxBy((a, b) =>
-        cmp(a[1], b[1]),
-      )?.[0] ?? null
-    );
+  maxByKey(predicate: (a: Item) => number): Option<Item> {
+    return this.map((x) => [x, predicate(x)] as [Item, number])
+      .maxBy((a, b) => cmp(a[1], b[1]))
+      .andThen(([item]) => Some(item));
   }
 
-  min(): Item | null {
+  min(): Option<Item> {
     return this.minBy(cmp);
   }
 
-  minBy(predicate: (a: Item, b: Item) => Ordering): Item | null {
+  minBy(predicate: (a: Item, b: Item) => Ordering): Option<Item> {
     return this.reduce((a, b) => {
       const res = predicate(a, b);
       return res <= 0 ? a : b;
     });
   }
 
-  minByKey(predicate: (a: Item) => number): Item | null {
-    return (
-      this.map((x) => [x, predicate(x)] as [Item, number]).minBy((a, b) =>
-        cmp(a[1], b[1]),
-      )?.[0] ?? null
-    );
+  minByKey(predicate: (a: Item) => number): Option<Item> {
+    return this.map((x) => [x, predicate(x)] as [Item, number])
+      .minBy((a, b) => cmp(a[1], b[1]))
+      .andThen(([item]) => Some(item));
   }
 
   ne(other: RustIterator<Item>): boolean {
     return !this.eq(other);
   }
 
-  nth(index: number): Item | null {
+  nth(index: number): Option<Item> {
     let i = 0;
     for (const value of this) {
       if (i === index) {
-        return value;
+        return Some(value);
       }
       i++;
     }
-    return null;
+    return None;
   }
 
   partition(predicate: (item: Item) => boolean): [Item[], Item[]] {
@@ -268,15 +269,15 @@ class RustIterator<Item> {
     return [a, b];
   }
 
-  position(predicate: (item: Item) => boolean) {
+  position(predicate: (item: Item) => boolean): Option<number> {
     let i = 0;
     for (const value of this) {
       if (predicate(value)) {
-        return i;
+        return Some(i);
       }
       i++;
     }
-    return null;
+    return None;
   }
 
   skip(n: number) {
@@ -337,18 +338,14 @@ class RustIterator<Item> {
     return new RustIterator(process());
   }
 
-  flatten(): RustIterator<FlatRustIterator<Item, 0>> {
+  flatten(this: RustIterator<RustIterator<unknown>>): FlatIterator<Item> {
     const self = this;
     function* process() {
       for (const value of self) {
-        if (value instanceof RustIterator) {
-          yield* value;
-        } else {
-          yield value as FlatRustIterator<Item, 0>;
-        }
+        yield* value;
       }
     }
-    return new RustIterator(process());
+    return new RustIterator(process()) as FlatIterator<Item>;
   }
 
   takeWhile(predicate: (item: Item) => boolean): RustIterator<Item> {
