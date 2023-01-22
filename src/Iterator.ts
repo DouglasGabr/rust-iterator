@@ -9,7 +9,7 @@ function cmp<T>(a: T, b: T): Ordering {
   return 1;
 }
 
-class RustIterator<Item> {
+export class RustIterator<Item> {
   constructor(private iterable: Iterator<Item>) {}
 
   [Symbol.iterator]() {

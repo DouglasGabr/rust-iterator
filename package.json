@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "jest",
-    "build": "swc src -d dist"
+    "build": "tsc --project tsconfig.build.json"
   },
   "author": "Douglas Francisco Gabriel",
   "license": "MIT",

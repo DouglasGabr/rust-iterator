@@ -82,7 +82,7 @@ export class Option<T> {
   iter() {
     return this.match(
       (value) => iter([value]),
-      () => iter([]),
+      () => iter([] as T[]),
     );
   }
 
