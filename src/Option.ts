@@ -16,11 +16,11 @@ export class Option<T> {
     this.__value = value;
   }
 
-  static Some<T>(this: void, value: T): Option<T> {
+  static Some<T>(value: T): Option<T> {
     return new Option(OptionType.Some, value);
   }
 
-  static None<T>(this: void): Option<T> {
+  static None<T>(): Option<T> {
     return new Option(OptionType.None, undefined) as Option<T>;
   }
 
@@ -31,6 +31,18 @@ export class Option<T> {
   unwrap(): T {
     return this.expect('called Option.unwrap() on a None value');
   }
+
+  unwrapOr(defaultValue: T): T {
+    return this.unwrapOrElse(() => defaultValue);
+  }
+
+  unwrapOrElse(defaultFn: () => T): T {
+    return this.match(
+      (value) => value,
+      () => defaultFn(),
+    );
+  }
+
   expect(message: string): T {
     return this.match(
       (value) => value,
@@ -57,9 +69,21 @@ export class Option<T> {
       () => Option.None<U>(),
     );
   }
+  mapOr<U>(defaultValue: U, fn: (value: T) => U): U {
+    return this.mapOrElse(() => defaultValue, fn);
+  }
+  mapOrElse<U>(defaultFn: () => U, mapFn: (value: T) => U): U {
+    return this.match(
+      (value) => mapFn(value),
+      () => defaultFn(),
+    );
+  }
 
   iter() {
-    return iter([this]);
+    return this.match(
+      (value) => iter([value]),
+      () => iter([]),
+    );
   }
 
   and<U>(other: Option<U>): Option<U> {
@@ -112,7 +136,46 @@ export class Option<T> {
         ),
     );
   }
+  getOrInsert(value: T): T {
+    return this.getOrInsertWith(() => value);
+  }
+  getOrInsertWith(fn: () => T): T {
+    return this.match(
+      (value) => value,
+      () => {
+        const value = fn();
+        this.__type = OptionType.Some;
+        this.__value = value;
+        return value;
+      },
+    );
+  }
+  insert(value: T): T {
+    this.__type = OptionType.Some;
+    this.__value = value;
+    return value;
+  }
+  replace(value: T): Option<T> {
+    const old = this.match(
+      (value) => Option.Some(value),
+      () => Option.None<T>(),
+    );
+    this.__type = OptionType.Some;
+    this.__value = value;
+    return old;
+  }
+  take(): Option<T> {
+    return this.match(
+      (value) => {
+        this.__type = OptionType.None;
+        this.__value = undefined;
+        return Option.Some(value);
+      },
+      () => Option.None<T>(),
+    );
+  }
 }
 
-export const Some = Option.Some;
-export const None = Option.None<never>();
+export const Some = Option.Some.bind(Option);
+// prettier-ignore
+export const None = (Option.None.bind(Option))<never>;

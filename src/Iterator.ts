@@ -122,7 +122,7 @@ class RustIterator<Item> {
   reduce(predicate: (accumulator: Item, item: Item) => Item): Option<Item> {
     const init = this.next();
     if (init.done) {
-      return None;
+      return None();
     }
     return Some(this.fold(init.value, predicate));
   }
@@ -163,7 +163,7 @@ class RustIterator<Item> {
         return Some(value);
       }
     }
-    return None;
+    return None();
   }
 
   findMap<OutputItem>(predicate: (item: Item) => Option<OutputItem>) {
@@ -194,7 +194,7 @@ class RustIterator<Item> {
   }
 
   last(): Option<Item> {
-    let last: Option<Item> = None;
+    let last: Option<Item> = None();
     for (const value of this) {
       last = Some(value);
     }
@@ -253,7 +253,7 @@ class RustIterator<Item> {
       }
       i++;
     }
-    return None;
+    return None();
   }
 
   partition(predicate: (item: Item) => boolean): [Item[], Item[]] {
@@ -277,7 +277,7 @@ class RustIterator<Item> {
       }
       i++;
     }
-    return None;
+    return None();
   }
 
   skip(n: number) {

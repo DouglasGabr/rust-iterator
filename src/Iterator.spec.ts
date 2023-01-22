@@ -178,7 +178,7 @@ describe('Iterator', () => {
       // act
       const result = a.reduce((acc, x) => acc + x);
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.scan()', () => {
@@ -332,7 +332,7 @@ describe('Iterator', () => {
       // arrange
       const a = iter([1, 2, 3, 4]);
       // act
-      const result = a.filterMap((x) => (x % 2 === 0 ? Some(x * 2) : None));
+      const result = a.filterMap((x) => (x % 2 === 0 ? Some(x * 2) : None()));
       // assert
       expect(result.next()).toStrictEqual({ done: false, value: 4 });
       expect(result.next()).toStrictEqual({ done: false, value: 8 });
@@ -354,7 +354,7 @@ describe('Iterator', () => {
       // act
       const result = a.find((x) => x % 5 === 0);
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.findMap()', () => {
@@ -362,7 +362,7 @@ describe('Iterator', () => {
       // arrange
       const a = iter([1, 2, 3, 4]);
       // act
-      const result = a.findMap((x) => (x % 2 === 0 ? Some(x * 2) : None));
+      const result = a.findMap((x) => (x % 2 === 0 ? Some(x * 2) : None()));
       // assert
       expect(result).toStrictEqual(Some(4));
     });
@@ -370,9 +370,9 @@ describe('Iterator', () => {
       // arrange
       const a = iter([1, 2, 3, 4]);
       // act
-      const result = a.findMap((x) => (x % 5 === 0 ? Some(x * 2) : None));
+      const result = a.findMap((x) => (x % 5 === 0 ? Some(x * 2) : None()));
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.flatten()', () => {
@@ -438,7 +438,7 @@ describe('Iterator', () => {
       // act
       const result = a.last();
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.takeWhile()', () => {
@@ -458,7 +458,7 @@ describe('Iterator', () => {
       // arrange
       const a = iter([1, 2, 3, 4]);
       // act
-      const result = a.mapWhile((x) => (x < 3 ? Some(x * 2) : None));
+      const result = a.mapWhile((x) => (x < 3 ? Some(x * 2) : None()));
       // assert
       expect(result.next()).toStrictEqual({ done: false, value: 2 });
       expect(result.next()).toStrictEqual({ done: false, value: 4 });
@@ -480,7 +480,7 @@ describe('Iterator', () => {
       // act
       const result = a.maxBy((a, b) => (a === b ? 0 : a > b ? 1 : -1));
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.max()', () => {
@@ -498,7 +498,7 @@ describe('Iterator', () => {
       // act
       const result = a.max();
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.maxByKey()', () => {
@@ -516,7 +516,7 @@ describe('Iterator', () => {
       // act
       const result = a.maxByKey((x) => x.a);
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.minBy()', () => {
@@ -534,7 +534,7 @@ describe('Iterator', () => {
       // act
       const result = a.minBy((a, b) => (a === b ? 0 : a > b ? 1 : -1));
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.min()', () => {
@@ -552,7 +552,7 @@ describe('Iterator', () => {
       // act
       const result = a.min();
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.minByKey()', () => {
@@ -570,7 +570,7 @@ describe('Iterator', () => {
       // act
       const result = a.minByKey((x) => x.a);
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.ne()', () => {
@@ -606,7 +606,7 @@ describe('Iterator', () => {
       // act
       const result = a.nth(2);
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.partition()', () => {
@@ -637,7 +637,7 @@ describe('Iterator', () => {
       // act
       const result = a.position((x) => x === 5);
       // assert
-      expect(result).toStrictEqual(None);
+      expect(result).toStrictEqual(None());
     });
   });
   describe('.skip()', () => {
