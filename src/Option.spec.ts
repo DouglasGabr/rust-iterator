@@ -1,4 +1,5 @@
 import { None, Option, Some } from './Option';
+import { Err, Ok, Result } from './Result';
 
 describe('Option', () => {
   describe('.flatten()', () => {
@@ -332,6 +333,20 @@ describe('Option', () => {
         // assert
         expect(result.isNone()).toBeTruthy();
       });
+    });
+  });
+  describe('.transpose()', () => {
+    it('should return Ok(None()) if None', () => {
+      const none: Option<Result<number, Error>> = None();
+      expect(none.transpose()).toStrictEqual(Ok(None()));
+    });
+    it('should return Ok(Some(_)) if Some(Ok(_))', () => {
+      const some = Some(Ok(1));
+      expect(some.transpose()).toStrictEqual(Ok(Some(1)));
+    });
+    it('should return Err(_) if Some(Err(_))', () => {
+      const err = Some(Err('error'));
+      expect(err.transpose()).toStrictEqual(Err('error'));
     });
   });
 });

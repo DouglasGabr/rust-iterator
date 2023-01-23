@@ -1,4 +1,5 @@
 import { iter } from './Iterator';
+import { Err, Ok, Result } from './Result';
 
 type FlatOption<T> = T extends Option<unknown> ? T : Option<T>;
 
@@ -172,6 +173,16 @@ export class Option<T> {
         return Option.Some(value);
       },
       () => Option.None<T>(),
+    );
+  }
+  transpose<U, F>(this: Option<Result<U, F>>): Result<Option<U>, F> {
+    return this.match(
+      (result) =>
+        result.match(
+          (value) => Ok(Some(value)),
+          (err) => Err(err),
+        ),
+      () => Ok(None()),
     );
   }
 }
