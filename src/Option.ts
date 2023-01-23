@@ -1,4 +1,4 @@
-import { iter } from './Iterator';
+import { Iter } from './Iterator';
 import { Err, Ok, Result } from './Result';
 
 type FlatOption<T> = T extends Option<unknown> ? T : Option<T>;
@@ -82,8 +82,8 @@ export class Option<T> {
 
   iter() {
     return this.match(
-      (value) => iter([value]),
-      () => iter([] as T[]),
+      (value) => Iter.from([value]),
+      () => Iter.from<T>([]),
     );
   }
 

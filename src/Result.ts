@@ -1,4 +1,4 @@
-import { iter, RustIterator } from './Iterator';
+import { Iter } from './Iterator';
 import { None, Option, Some } from './Option';
 
 enum ResultType {
@@ -62,10 +62,10 @@ export class Result<T, E> {
   isOk(): boolean {
     return this.__type === ResultType.Ok;
   }
-  iter(): RustIterator<T> {
+  iter(): Iter<T> {
     return this.match(
-      (v) => iter([v]),
-      () => iter([] as T[]),
+      (v) => Iter.from([v]),
+      () => Iter.from<T>([]),
     );
   }
   map<U>(fn: (value: T) => U): Result<U, E> {

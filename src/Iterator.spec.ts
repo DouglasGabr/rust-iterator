@@ -1,18 +1,18 @@
-import { iter } from './Iterator';
+import { Iter, Ordering } from './Iterator';
 import { None, Some } from './Option';
 
 describe('Iterator', () => {
   describe('.all()', () => {
     it('should return true if all items match the predicate', () => {
-      const iterator = iter([1, 2, 3]);
+      const iterator = Iter.from([1, 2, 3]);
       expect(iterator.all((x) => x < 4)).toBe(true);
     });
     it('should return false if any item does not match the predicate', () => {
-      const iterator = iter([1, 2, 3]);
+      const iterator = Iter.from([1, 2, 3]);
       expect(iterator.all((x) => x < 2)).toBe(false);
     });
     it('.next() should keep processing if result is false', () => {
-      const iterator = iter([1, 2, 3, 4, 5]);
+      const iterator = Iter.from([1, 2, 3, 4, 5]);
       iterator.all((x) => x < 3);
       const next = iterator.next();
       expect(next).toStrictEqual({
@@ -23,15 +23,15 @@ describe('Iterator', () => {
   });
   describe('.any()', () => {
     it('should return true if any item matches the predicate', () => {
-      const iterator = iter([1, 2, 3]);
+      const iterator = Iter.from([1, 2, 3]);
       expect(iterator.any((x) => x === 2)).toBe(true);
     });
     it('should return false if no item matches the predicate', () => {
-      const iterator = iter([1, 2, 3]);
+      const iterator = Iter.from([1, 2, 3]);
       expect(iterator.any((x) => x === 4)).toBe(false);
     });
     it('.next() should keep processing if result is true', () => {
-      const iterator = iter([1, 2, 3, 4, 5]);
+      const iterator = Iter.from([1, 2, 3, 4, 5]);
       iterator.any((x) => x === 3);
       const next = iterator.next();
       expect(next).toStrictEqual({
@@ -43,8 +43,8 @@ describe('Iterator', () => {
   describe('.chain()', () => {
     it('should chain 2 iterators', () => {
       // arrange
-      const a1 = iter([1, 2, 3]);
-      const a2 = iter([4, 5, 6]);
+      const a1 = Iter.from([1, 2, 3]);
+      const a2 = Iter.from([4, 5, 6]);
       // act
       const result = a1.chain(a2);
       // assert
@@ -60,7 +60,7 @@ describe('Iterator', () => {
   describe('.collect()', () => {
     it('should return array of items', () => {
       // arrange
-      const a1 = iter([1, 2, 3]);
+      const a1 = Iter.from([1, 2, 3]);
       // act
       const result = a1.collect();
       // assert
@@ -71,7 +71,7 @@ describe('Iterator', () => {
   describe('.count()', () => {
     it('should return size of iterator', () => {
       // arrange
-      const a1 = iter([1, 2, 3]);
+      const a1 = Iter.from([1, 2, 3]);
       // act
       const result = a1.count();
       // assert
@@ -81,7 +81,7 @@ describe('Iterator', () => {
   describe('.cycle()', () => {
     it('should return infinite iterator', () => {
       // arrange
-      const a1 = iter([1, 2, 3]);
+      const a1 = Iter.from([1, 2, 3]);
       // act
       const result = a1.cycle();
       // assert
@@ -117,7 +117,7 @@ describe('Iterator', () => {
     describe('empty iterator', () => {
       it('should return empty iterator', () => {
         // arrange
-        const a1 = iter([]);
+        const a1 = Iter.from([]);
         // act
         const result = a1.cycle();
         // assert
@@ -131,7 +131,7 @@ describe('Iterator', () => {
   describe('.enumerate()', () => {
     it('should return key value pair iterator', () => {
       // arrange
-      const a1 = iter(['a', 'b', 'c']);
+      const a1 = Iter.from(['a', 'b', 'c']);
       // act
       const result = a1.enumerate();
       // assert
@@ -156,7 +156,7 @@ describe('Iterator', () => {
   describe('.fold()', () => {
     it('should fold iterator into one value', () => {
       // arrange
-      const a = iter([1, 2, 3]);
+      const a = Iter.from([1, 2, 3]);
       // act
       const result = a.fold(0, (acc, x) => acc + x);
       // assert
@@ -166,7 +166,7 @@ describe('Iterator', () => {
   describe('.reduce()', () => {
     it('should reduce iterator into one value', () => {
       // arrange
-      const a = iter([1, 2, 3]);
+      const a = Iter.from([1, 2, 3]);
       // act
       const result = a.reduce((acc, x) => acc + x);
       // assert
@@ -174,7 +174,7 @@ describe('Iterator', () => {
     });
     it('should return None if iterator is empty', () => {
       // arrange
-      const a = iter<number>([]);
+      const a = Iter.from<number>([]);
       // act
       const result = a.reduce((acc, x) => acc + x);
       // assert
@@ -184,7 +184,7 @@ describe('Iterator', () => {
   describe('.scan()', () => {
     it('should work', () => {
       // arrange
-      const a = iter([1, 2, 3]);
+      const a = Iter.from([1, 2, 3]);
       // act
       const result = a.scan(1, (state, x) => {
         state.current = state.current * x;
@@ -213,8 +213,8 @@ describe('Iterator', () => {
     describe('empty iterators', () => {
       it('should return true', () => {
         // arrange
-        const a1 = iter([]);
-        const a2 = iter([]);
+        const a1 = Iter.from([]);
+        const a2 = Iter.from([]);
         // act
         const result = a1.eq(a2);
         // assert
@@ -225,8 +225,8 @@ describe('Iterator', () => {
       describe('iterator 2 is not empty', () => {
         it('should return false', () => {
           // arrange
-          const a1 = iter<number>([]);
-          const a2 = iter([1, 2, 3]);
+          const a1 = Iter.from<number>([]);
+          const a2 = Iter.from([1, 2, 3]);
           // act
           const result = a1.eq(a2);
           // assert
@@ -238,8 +238,8 @@ describe('Iterator', () => {
       describe('iterator 1 is not empty', () => {
         it('should return false', () => {
           // arrange
-          const a1 = iter([1, 2, 3]);
-          const a2 = iter<number>([]);
+          const a1 = Iter.from([1, 2, 3]);
+          const a2 = Iter.from<number>([]);
           // act
           const result = a1.eq(a2);
           // assert
@@ -251,8 +251,8 @@ describe('Iterator', () => {
       describe('iterators are equal', () => {
         it('should return true', () => {
           // arrange
-          const a1 = iter([1, 2, 3]);
-          const a2 = iter([1, 2, 3]);
+          const a1 = Iter.from([1, 2, 3]);
+          const a2 = Iter.from([1, 2, 3]);
           // act
           const result = a1.eq(a2);
           // assert
@@ -262,8 +262,8 @@ describe('Iterator', () => {
       describe('iterator 2 is bigger than 1', () => {
         it('should return false', () => {
           // arrange
-          const a1 = iter([1, 2, 3]);
-          const a2 = iter([1, 2, 3, 4]);
+          const a1 = Iter.from([1, 2, 3]);
+          const a2 = Iter.from([1, 2, 3, 4]);
           // act
           const result = a1.eq(a2);
           // assert
@@ -273,8 +273,8 @@ describe('Iterator', () => {
       describe('iterator 2 is smaller than 1', () => {
         it('should return false', () => {
           // arrange
-          const a1 = iter([1, 2, 3]);
-          const a2 = iter([1, 2]);
+          const a1 = Iter.from([1, 2, 3]);
+          const a2 = Iter.from([1, 2]);
           // act
           const result = a1.eq(a2);
           // assert
@@ -284,8 +284,8 @@ describe('Iterator', () => {
       describe('iterator 2 is different than 1', () => {
         it('should return false', () => {
           // arrange
-          const a1 = iter([1, 2, 3]);
-          const a2 = iter([1, 2, 5]);
+          const a1 = Iter.from([1, 2, 3]);
+          const a2 = Iter.from([1, 2, 5]);
           // act
           const result = a1.eq(a2);
           // assert
@@ -297,7 +297,7 @@ describe('Iterator', () => {
   describe('.inspect()', () => {
     it('should inspect', () => {
       // arrange
-      const a = iter([1, 4, 2, 3]);
+      const a = Iter.from([1, 4, 2, 3]);
       const log = jest.fn();
       // act
       const _sum = a
@@ -317,7 +317,7 @@ describe('Iterator', () => {
   describe('.map()', () => {
     it('should map values', () => {
       // arrange
-      const a = iter([1, 2, 3]);
+      const a = Iter.from([1, 2, 3]);
       // act
       const result = a.map((x) => x * 2);
       // assert
@@ -330,7 +330,7 @@ describe('Iterator', () => {
   describe('.filterMap()', () => {
     it('should filter and map values', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.filterMap((x) => (x % 2 === 0 ? Some(x * 2) : None()));
       // assert
@@ -342,7 +342,7 @@ describe('Iterator', () => {
   describe('.find()', () => {
     it('should find', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.find((x) => x % 2 === 0);
       // assert
@@ -350,7 +350,7 @@ describe('Iterator', () => {
     });
     it('should return None if not found', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.find((x) => x % 5 === 0);
       // assert
@@ -360,7 +360,7 @@ describe('Iterator', () => {
   describe('.findMap()', () => {
     it('should find and map', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.findMap((x) => (x % 2 === 0 ? Some(x * 2) : None()));
       // assert
@@ -368,7 +368,7 @@ describe('Iterator', () => {
     });
     it('should return None if not found', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.findMap((x) => (x % 5 === 0 ? Some(x * 2) : None()));
       // assert
@@ -378,7 +378,9 @@ describe('Iterator', () => {
   describe('.flatten()', () => {
     it('should flatten', () => {
       // arrange
-      const a = iter('abc\n123'.split('\n')).map((i) => iter(i.split('')));
+      const a = Iter.from('abc\n123'.split('\n')).map((i) =>
+        Iter.from(i.split('')),
+      );
       // act
       const result = a.flatten();
       // assert
@@ -394,9 +396,9 @@ describe('Iterator', () => {
   describe('.flatMap()', () => {
     it('should flatMap', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
-      const result = a.flatMap((x) => iter([x, x * 2]));
+      const result = a.flatMap((x) => Iter.from([x, x * 2]));
       // assert
       expect(result.next()).toStrictEqual({ done: false, value: 1 });
       expect(result.next()).toStrictEqual({ done: false, value: 2 });
@@ -412,7 +414,7 @@ describe('Iterator', () => {
   describe('.forEach()', () => {
     it('should iterate', () => {
       // arrange
-      const a = iter([1, 2, 3]);
+      const a = Iter.from([1, 2, 3]);
       const log = jest.fn();
       // act
       a.forEach((x) => log(x));
@@ -426,7 +428,7 @@ describe('Iterator', () => {
   describe('.last()', () => {
     it('should return last element', () => {
       // arrange
-      const a = iter([1, 2, 3]);
+      const a = Iter.from([1, 2, 3]);
       // act
       const result = a.last();
       // assert
@@ -434,7 +436,7 @@ describe('Iterator', () => {
     });
     it('should return None if empty', () => {
       // arrange
-      const a = iter([]);
+      const a = Iter.from([]);
       // act
       const result = a.last();
       // assert
@@ -444,7 +446,7 @@ describe('Iterator', () => {
   describe('.takeWhile()', () => {
     it('should take while', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.takeWhile((x) => x < 3);
       // assert
@@ -456,7 +458,7 @@ describe('Iterator', () => {
   describe('.mapWhile()', () => {
     it('should map while', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.mapWhile((x) => (x < 3 ? Some(x * 2) : None()));
       // assert
@@ -468,17 +470,21 @@ describe('Iterator', () => {
   describe('.maxBy()', () => {
     it('should return max by', () => {
       // arrange
-      const a = iter([1, 1, 3, 2, 3, 4]);
+      const a = Iter.from([1, 1, 3, 2, 3, 4]);
       // act
-      const result = a.maxBy((a, b) => (a === b ? 0 : a > b ? 1 : -1));
+      const result = a.maxBy((a, b) =>
+        a === b ? Ordering.Equal : a > b ? Ordering.Greater : Ordering.Less,
+      );
       // assert
       expect(result).toStrictEqual(Some(4));
     });
     it('should return None if empty', () => {
       // arrange
-      const a = iter<number>([]);
+      const a = Iter.from<number>([]);
       // act
-      const result = a.maxBy((a, b) => (a === b ? 0 : a > b ? 1 : -1));
+      const result = a.maxBy((a, b) =>
+        a === b ? Ordering.Equal : a > b ? Ordering.Greater : Ordering.Less,
+      );
       // assert
       expect(result).toStrictEqual(None());
     });
@@ -486,7 +492,7 @@ describe('Iterator', () => {
   describe('.max()', () => {
     it('should return max', () => {
       // arrange
-      const a = iter([1, 1, 2, 2, 3, 4]);
+      const a = Iter.from([1, 1, 2, 2, 3, 4]);
       // act
       const result = a.max();
       // assert
@@ -494,7 +500,7 @@ describe('Iterator', () => {
     });
     it('should return None if empty', () => {
       // arrange
-      const a = iter<number>([]);
+      const a = Iter.from<number>([]);
       // act
       const result = a.max();
       // assert
@@ -504,7 +510,7 @@ describe('Iterator', () => {
   describe('.maxByKey()', () => {
     it('should return max by key', () => {
       // arrange
-      const a = iter([{ a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }]);
+      const a = Iter.from([{ a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }]);
       // act
       const result = a.maxByKey((x) => x.a);
       // assert
@@ -512,7 +518,7 @@ describe('Iterator', () => {
     });
     it('should return None if empty', () => {
       // arrange
-      const a = iter<{ a: number }>([]);
+      const a = Iter.from<{ a: number }>([]);
       // act
       const result = a.maxByKey((x) => x.a);
       // assert
@@ -522,17 +528,21 @@ describe('Iterator', () => {
   describe('.minBy()', () => {
     it('should return min by', () => {
       // arrange
-      const a = iter([4, 4, 1, 1, 3, 3, 2, 2, 3, 4]);
+      const a = Iter.from([4, 4, 1, 1, 3, 3, 2, 2, 3, 4]);
       // act
-      const result = a.minBy((a, b) => (a === b ? 0 : a > b ? 1 : -1));
+      const result = a.minBy((a, b) =>
+        a === b ? Ordering.Equal : a > b ? Ordering.Greater : Ordering.Less,
+      );
       // assert
       expect(result).toStrictEqual(Some(1));
     });
     it('should return None if empty', () => {
       // arrange
-      const a = iter<number>([]);
+      const a = Iter.from<number>([]);
       // act
-      const result = a.minBy((a, b) => (a === b ? 0 : a > b ? 1 : -1));
+      const result = a.minBy((a, b) =>
+        a === b ? Ordering.Equal : a > b ? Ordering.Greater : Ordering.Less,
+      );
       // assert
       expect(result).toStrictEqual(None());
     });
@@ -540,7 +550,7 @@ describe('Iterator', () => {
   describe('.min()', () => {
     it('should return min', () => {
       // arrange
-      const a = iter([4, 4, 1, 1, 2, 3, 4]);
+      const a = Iter.from([4, 4, 1, 1, 2, 3, 4]);
       // act
       const result = a.min();
       // assert
@@ -548,7 +558,7 @@ describe('Iterator', () => {
     });
     it('should return None if empty', () => {
       // arrange
-      const a = iter<number>([]);
+      const a = Iter.from<number>([]);
       // act
       const result = a.min();
       // assert
@@ -558,7 +568,7 @@ describe('Iterator', () => {
   describe('.minByKey()', () => {
     it('should return min by key', () => {
       // arrange
-      const a = iter([{ a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }]);
+      const a = Iter.from([{ a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }]);
       // act
       const result = a.minByKey((x) => x.a);
       // assert
@@ -566,7 +576,7 @@ describe('Iterator', () => {
     });
     it('should return None if empty', () => {
       // arrange
-      const a = iter<{ a: number }>([]);
+      const a = Iter.from<{ a: number }>([]);
       // act
       const result = a.minByKey((x) => x.a);
       // assert
@@ -576,17 +586,17 @@ describe('Iterator', () => {
   describe('.ne()', () => {
     it('should return true if not equal', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
-      const result = a.ne(iter([1, 2, 3]));
+      const result = a.ne(Iter.from([1, 2, 3]));
       // assert
       expect(result).toBeTruthy();
     });
     it('should return false if equal', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
-      const result = a.ne(iter([1, 2, 3, 4]));
+      const result = a.ne(Iter.from([1, 2, 3, 4]));
       // assert
       expect(result).toBeFalsy();
     });
@@ -594,7 +604,7 @@ describe('Iterator', () => {
   describe('.nth()', () => {
     it('should return nth', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.nth(2);
       // assert
@@ -602,7 +612,7 @@ describe('Iterator', () => {
     });
     it('should return None if empty', () => {
       // arrange
-      const a = iter<number>([]);
+      const a = Iter.from<number>([]);
       // act
       const result = a.nth(2);
       // assert
@@ -612,7 +622,7 @@ describe('Iterator', () => {
   describe('.partition()', () => {
     it('should partition', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.partition((x) => x % 2 === 0);
       // assert
@@ -625,7 +635,7 @@ describe('Iterator', () => {
   describe('.position()', () => {
     it('should return position', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.position((x) => x === 3);
       // assert
@@ -633,7 +643,7 @@ describe('Iterator', () => {
     });
     it('should return None if not found', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.position((x) => x === 5);
       // assert
@@ -643,7 +653,7 @@ describe('Iterator', () => {
   describe('.skip()', () => {
     it('should skip', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.skip(2);
       // assert
@@ -651,7 +661,7 @@ describe('Iterator', () => {
     });
     it('should return empty if skip is greater than length', () => {
       // arrange
-      const a = iter<number>([1, 2]);
+      const a = Iter.from<number>([1, 2]);
       // act
       const result = a.skip(3);
       // assert
@@ -661,7 +671,7 @@ describe('Iterator', () => {
   describe('.take()', () => {
     it('should take', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.take(2);
       // assert
@@ -671,7 +681,7 @@ describe('Iterator', () => {
     });
     it('should stop early if "take" is greater than length', () => {
       // arrange
-      const a = iter<number>([1, 2]);
+      const a = Iter.from<number>([1, 2]);
       // act
       const result = a.take(3);
       // assert
@@ -683,7 +693,7 @@ describe('Iterator', () => {
   describe('.sum()', () => {
     it('should sum', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.sum();
       // assert
@@ -691,7 +701,7 @@ describe('Iterator', () => {
     });
     it('should return 0 if empty', () => {
       // arrange
-      const a = iter<number>([]);
+      const a = Iter.from<number>([]);
       // act
       const result = a.sum();
       // assert
@@ -701,7 +711,7 @@ describe('Iterator', () => {
   describe('.product()', () => {
     it('should product', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
+      const a = Iter.from([1, 2, 3, 4]);
       // act
       const result = a.product();
       // assert
@@ -709,7 +719,7 @@ describe('Iterator', () => {
     });
     it('should return 0 if empty', () => {
       // arrange
-      const a = iter<number>([]);
+      const a = Iter.from<number>([]);
       // act
       const result = a.product();
       // assert
@@ -719,8 +729,8 @@ describe('Iterator', () => {
   describe('.zip()', () => {
     it('should zip', () => {
       // arrange
-      const a = iter([1, 2, 3, 4]);
-      const b = iter([5, 6, 7, 8]);
+      const a = Iter.from([1, 2, 3, 4]);
+      const b = Iter.from([5, 6, 7, 8]);
       // act
       const result = a.zip(b);
       // assert
@@ -732,8 +742,8 @@ describe('Iterator', () => {
     });
     it('should stop early if first iterator is shorter than second', () => {
       // arrange
-      const a = iter([1, 2]);
-      const b = iter([5, 6, 7, 8]);
+      const a = Iter.from([1, 2]);
+      const b = Iter.from([5, 6, 7, 8]);
       // act
       const result = a.zip(b);
       // assert
@@ -743,8 +753,8 @@ describe('Iterator', () => {
     });
     it('should stop early if second iterator is shorter than first', () => {
       // arrange
-      const a = iter([5, 6, 7, 8]);
-      const b = iter([1, 2]);
+      const a = Iter.from([5, 6, 7, 8]);
+      const b = Iter.from([1, 2]);
       // act
       const result = a.zip(b);
       // assert
@@ -756,7 +766,7 @@ describe('Iterator', () => {
   describe('.unzip()', () => {
     it('should unzip', () => {
       // arrange
-      const a = iter<[number, number]>([
+      const a = Iter.from<[number, number]>([
         [1, 5],
         [2, 6],
         [3, 7],

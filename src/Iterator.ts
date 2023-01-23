@@ -1,15 +1,19 @@
 import { None, Option, Some } from './Option';
 
-type FlatIterator<T> = T extends RustIterator<unknown> ? T : RustIterator<T>;
+type FlatIterator<T> = T extends Iter<unknown> ? T : Iter<T>;
 
-export type Ordering = -1 | 0 | 1;
+export enum Ordering {
+  Less = -1,
+  Equal = 0,
+  Greater = 1,
+}
 function cmp<T>(a: T, b: T): Ordering {
-  if (a === b) return 0;
-  if (a < b) return -1;
-  return 1;
+  if (a === b) return Ordering.Equal;
+  if (a < b) return Ordering.Less;
+  return Ordering.Greater;
 }
 
-export class RustIterator<Item> {
+export class Iter<Item> {
   constructor(private iterable: Iterator<Item>) {}
 
   [Symbol.iterator]() {
@@ -38,13 +42,13 @@ export class RustIterator<Item> {
     return false;
   }
 
-  chain(other: RustIterator<Item>): RustIterator<Item> {
+  chain(other: Iter<Item>): Iter<Item> {
     const self = this;
     function* process() {
       yield* self;
       yield* other;
     }
-    return new RustIterator(process());
+    return new Iter(process());
   }
 
   collect(): Item[] {
@@ -59,7 +63,7 @@ export class RustIterator<Item> {
     return count;
   }
 
-  cycle(): RustIterator<Item> {
+  cycle(): Iter<Item> {
     const self = this;
     function* process() {
       let index = 0;
@@ -80,10 +84,10 @@ export class RustIterator<Item> {
         yield results[index];
       }
     }
-    return new RustIterator(process());
+    return new Iter(process());
   }
 
-  enumerate(): RustIterator<[number, Item]> {
+  enumerate(): Iter<[number, Item]> {
     const self = this;
     function* process() {
       let index = 0;
@@ -91,10 +95,10 @@ export class RustIterator<Item> {
         yield [index++, value] as [number, Item];
       }
     }
-    return new RustIterator(process());
+    return new Iter(process());
   }
 
-  eq(other: RustIterator<Item>): boolean {
+  eq(other: Iter<Item>): boolean {
     for (const value of this) {
       const otherNext = other.next();
       if (otherNext.done) {
@@ -136,7 +140,7 @@ export class RustIterator<Item> {
         }
       }
     }
-    return new RustIterator<SubItem>(process());
+    return new Iter<SubItem>(process());
   }
 
   map<OutputItem>(predicate: (item: Item) => OutputItem) {
@@ -146,12 +150,12 @@ export class RustIterator<Item> {
         yield predicate(value);
       }
     }
-    return new RustIterator(process());
+    return new Iter(process());
   }
 
   filterMap<OutputItem>(
     predicate: (item: Item) => Option<OutputItem>,
-  ): RustIterator<OutputItem> {
+  ): Iter<OutputItem> {
     return this.map(predicate)
       .filter((x) => x.isSome())
       .map((x) => x.unwrap());
@@ -172,7 +176,7 @@ export class RustIterator<Item> {
       .flatten();
   }
 
-  flatMap<OutputItem>(predicate: (item: Item) => RustIterator<OutputItem>) {
+  flatMap<OutputItem>(predicate: (item: Item) => Iter<OutputItem>) {
     return this.map(predicate).flatten();
   }
 
@@ -190,7 +194,7 @@ export class RustIterator<Item> {
         yield value;
       }
     }
-    return new RustIterator(process());
+    return new Iter(process());
   }
 
   last(): Option<Item> {
@@ -241,7 +245,7 @@ export class RustIterator<Item> {
       .andThen(([item]) => Some(item));
   }
 
-  ne(other: RustIterator<Item>): boolean {
+  ne(other: Iter<Item>): boolean {
     return !this.eq(other);
   }
 
@@ -291,7 +295,7 @@ export class RustIterator<Item> {
       }
       yield* self;
     }
-    return new RustIterator(process());
+    return new Iter(process());
   }
 
   take(n: number) {
@@ -305,17 +309,17 @@ export class RustIterator<Item> {
         yield next.value;
       }
     }
-    return new RustIterator(process());
+    return new Iter(process());
   }
 
-  sum(this: RustIterator<number>): number {
+  sum(this: Iter<number>): number {
     const init = this.next();
     if (init.done) {
       return 0;
     }
     return this.fold(init.value, (acc, value) => acc + value);
   }
-  product(this: RustIterator<number>): number {
+  product(this: Iter<number>): number {
     const init = this.next();
     if (init.done) {
       return 0;
@@ -326,7 +330,7 @@ export class RustIterator<Item> {
   scan<State, Mapped>(
     init: State,
     predicate: (state: { current: State }, item: Item) => Mapped,
-  ): RustIterator<Mapped> {
+  ): Iter<Mapped> {
     const self = this;
     const state = { current: init };
     function* process() {
@@ -335,20 +339,20 @@ export class RustIterator<Item> {
         yield mapped;
       }
     }
-    return new RustIterator(process());
+    return new Iter(process());
   }
 
-  flatten(this: RustIterator<RustIterator<unknown>>): FlatIterator<Item> {
+  flatten(this: Iter<Iter<unknown>>): FlatIterator<Item> {
     const self = this;
     function* process() {
       for (const value of self) {
         yield* value;
       }
     }
-    return new RustIterator(process()) as FlatIterator<Item>;
+    return new Iter(process()) as FlatIterator<Item>;
   }
 
-  takeWhile(predicate: (item: Item) => boolean): RustIterator<Item> {
+  takeWhile(predicate: (item: Item) => boolean): Iter<Item> {
     const self = this;
     function* process() {
       for (const value of self) {
@@ -358,12 +362,10 @@ export class RustIterator<Item> {
         yield value;
       }
     }
-    return new RustIterator(process());
+    return new Iter(process());
   }
 
-  zip<OtherItem>(
-    other: RustIterator<OtherItem>,
-  ): RustIterator<[Item, OtherItem]> {
+  zip<OtherItem>(other: Iter<OtherItem>): Iter<[Item, OtherItem]> {
     const self = this;
     function* process() {
       for (const value of self) {
@@ -374,12 +376,10 @@ export class RustIterator<Item> {
         yield [value, otherValue.value] as [Item, OtherItem];
       }
     }
-    return new RustIterator(process());
+    return new Iter(process());
   }
 
-  unzip<First, Second>(
-    this: RustIterator<[First, Second]>,
-  ): [First[], Second[]] {
+  unzip<First, Second>(this: Iter<[First, Second]>): [First[], Second[]] {
     const a = [];
     const b = [];
     for (const [first, second] of this) {
@@ -388,10 +388,8 @@ export class RustIterator<Item> {
     }
     return [a, b];
   }
-}
 
-export function iter<IterableItem>(
-  iterable: Iterable<IterableItem>,
-): RustIterator<IterableItem> {
-  return new RustIterator(iterable[Symbol.iterator]());
+  static from<T>(iterable: Iterable<T>): Iter<T> {
+    return new Iter(iterable[Symbol.iterator]());
+  }
 }
