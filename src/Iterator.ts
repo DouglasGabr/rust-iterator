@@ -1,3 +1,4 @@
+import { AsyncIter } from './AsyncIter';
 import { None, Option, Some } from './Option';
 
 type FlatIterator<T> = T extends Iter<unknown> ? T : Iter<T>;
@@ -14,7 +15,7 @@ function cmp<T>(a: T, b: T): Ordering {
 }
 
 export class Iter<Item> {
-  constructor(private iterable: Iterator<Item>) {}
+  private constructor(private iterable: Iterator<Item>) {}
 
   [Symbol.iterator]() {
     return this.iterable;
@@ -387,6 +388,10 @@ export class Iter<Item> {
       b.push(second);
     }
     return [a, b];
+  }
+
+  toAsync<T>(this: Iter<Promise<T>>): AsyncIter<T> {
+    return AsyncIter.from(this);
   }
 
   static from<T>(iterable: Iterable<T>): Iter<T> {

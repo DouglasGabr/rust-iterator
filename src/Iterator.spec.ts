@@ -781,4 +781,18 @@ describe('Iterator', () => {
       ]);
     });
   });
+  describe('.toAsync()', () => {
+    it('should transform Iter<Promise<T>> to AsyncIter<T>', async () => {
+      const iter = Iter.from([Promise.resolve(1), Promise.resolve(2)]);
+      const asyncIter = iter.toAsync();
+      await expect(asyncIter.next()).resolves.toStrictEqual({
+        done: false,
+        value: 1,
+      });
+      await expect(asyncIter.next()).resolves.toStrictEqual({
+        done: false,
+        value: 2,
+      });
+    });
+  });
 });
