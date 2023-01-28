@@ -1,18 +1,8 @@
 import { AsyncIter } from './AsyncIter';
 import { None, Option, Some } from './Option';
+import { cmp, Ordering } from './utils';
 
 type FlatIterator<T> = T extends Iter<unknown> ? T : Iter<T>;
-
-export enum Ordering {
-  Less = -1,
-  Equal = 0,
-  Greater = 1,
-}
-function cmp<T>(a: T, b: T): Ordering {
-  if (a === b) return Ordering.Equal;
-  if (a < b) return Ordering.Less;
-  return Ordering.Greater;
-}
 
 export class Iter<Item> {
   private constructor(private iterable: Iterator<Item>) {}
@@ -323,7 +313,7 @@ export class Iter<Item> {
   product(this: Iter<number>): number {
     const init = this.next();
     if (init.done) {
-      return 0;
+      return 1;
     }
     return this.fold(init.value, (acc, value) => acc * value);
   }

@@ -1,5 +1,6 @@
-import { Iter, Ordering } from './Iterator';
+import { Iter } from './Iterator';
 import { None, Some } from './Option';
+import { Ordering } from './utils';
 
 describe('Iterator', () => {
   describe('.all()', () => {
@@ -717,13 +718,13 @@ describe('Iterator', () => {
       // assert
       expect(result).toStrictEqual(24);
     });
-    it('should return 0 if empty', () => {
+    it('should return 1 if empty', () => {
       // arrange
       const a = Iter.from<number>([]);
       // act
       const result = a.product();
       // assert
-      expect(result).toStrictEqual(0);
+      expect(result).toStrictEqual(1);
     });
   });
   describe('.zip()', () => {

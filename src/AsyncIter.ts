@@ -1,4 +1,5 @@
 import { None, Option, Some } from './Option';
+import { cmp, Ordering } from './utils';
 
 export class AsyncIter<T> {
   private constructor(private iterable: AsyncIterator<T>) {}
@@ -223,6 +224,63 @@ export class AsyncIter<T> {
       .map((x) => x.unwrap());
   }
 
+  async maxBy(predicate: (a: T, b: T) => Ordering): Promise<Option<T>> {
+    return await this.reduce((a, b) => {
+      const res = predicate(a, b);
+      return res === Ordering.Greater ? a : b;
+    });
+  }
+
+  async max(): Promise<Option<T>> {
+    return await this.maxBy(cmp);
+  }
+
+  async maxByKey(fn: (a: T) => number): Promise<Option<T>> {
+    return await this.maxBy((a, b) => cmp(fn(a), fn(b)));
+  }
+
+  async minBy(predicate: (a: T, b: T) => Ordering): Promise<Option<T>> {
+    return await this.reduce((a, b) => {
+      const res = predicate(a, b);
+      return res === Ordering.Less ? a : b;
+    });
+  }
+
+  async min(): Promise<Option<T>> {
+    return await this.minBy(cmp);
+  }
+
+  async minByKey(fn: (a: T) => number): Promise<Option<T>> {
+    return await this.minBy((a, b) => cmp(fn(a), fn(b)));
+  }
+
+  async ne(other: AsyncIter<T>): Promise<boolean> {
+    return !(await this.eq(other));
+  }
+
+  async nth(index: number): Promise<Option<T>> {
+    for await (const value of this) {
+      if (index === 0) {
+        return Some(value);
+      }
+      --index;
+    }
+    return None();
+  }
+
+  async partition(fn: (item: T) => boolean): Promise<[T[], T[]]> {
+    const a = [];
+    const b = [];
+    for await (const value of this) {
+      if (fn(value)) {
+        a.push(value);
+      } else {
+        b.push(value);
+      }
+    }
+    return [a, b];
+  }
+
   skip(n: number): AsyncIter<T> {
     const self = this;
     async function* process() {
@@ -249,6 +307,53 @@ export class AsyncIter<T> {
       }
     }
     return new AsyncIter(process());
+  }
+
+  sum(this: AsyncIter<number>): Promise<number> {
+    return this.fold(0, (a, b) => a + b);
+  }
+
+  product(this: AsyncIter<number>): Promise<number> {
+    return this.fold(1, (a, b) => a * b);
+  }
+
+  scan<State, Mapped>(
+    init: State,
+    fn: (state: { current: State }, item: T) => Mapped,
+  ): AsyncIter<Mapped> {
+    const self = this;
+    const state = { current: init };
+    async function* process() {
+      for await (const value of self) {
+        const mapped = fn(state, value);
+        yield mapped;
+      }
+    }
+    return new AsyncIter(process());
+  }
+
+  zip<U>(other: AsyncIter<U>): AsyncIter<[T, U]> {
+    const self = this;
+    async function* process() {
+      for await (const a of self) {
+        const b = await other.next();
+        if (b.done) {
+          return;
+        }
+        yield [a, b.value] as [T, U];
+      }
+    }
+    return new AsyncIter(process());
+  }
+
+  async unzip<U, V>(this: AsyncIter<[U, V]>): Promise<[U[], V[]]> {
+    const a = [];
+    const b = [];
+    for await (const [x, y] of this) {
+      a.push(x);
+      b.push(y);
+    }
+    return [a, b];
   }
 
   static from<T>(iterable: Iterable<T>): AsyncIter<Awaited<T>> {
